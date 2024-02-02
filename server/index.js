@@ -21,10 +21,10 @@ app.listen(PORT, () => {
 
 
 app.post('/add', (req, res) => {
-  const { name } = req.body;
-  const query = 'INSERT INTO game (name) VALUES (?)';
-  connection.query(query, [name], (error, results) => {
-    if (error) { 
+  const { name, userId } = req.body;
+  const query = 'INSERT INTO games (name, user_id) VALUES (?, ?)';
+  connection.query(query, [name, userId], (error, results) => {
+    if (error) {
       res.status(500).json({ success: false, error: error.message });
       return;
     }
@@ -33,13 +33,63 @@ app.post('/add', (req, res) => {
 });
 
 
-app.get('/data', (req, res) => {
-  connection.query("SELECT * FROM game", (error, results) => {
+app.get('/data/:userId', (req, res) => {
+  const { userId } = req.params;
+  const query = 'SELECT * FROM games WHERE user_id = ?';
+  connection.query(query, [userId], (error, results) => {
     if (error) {
       res.status(500).json({ error: error.message });
       return;
     }
     res.json(results);
+  });
+});
+
+
+app.post('/addUser', (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    res.status(400).json({ success: false, error: 'ユーザー名がないです' });
+    return;
+  }
+  const query = 'INSERT INTO users (username) VALUES (?)';
+  connection.query(query, [username], (error, results) => {
+    if (error) {
+      res.status(500).json({ success: false, error: error.message });
+      return;
+    }
+    res.json({ success: true, message: 'User added successfully' });
+  });
+});
+
+
+app.get('/users', (req, res) => {
+
+  connection.query('SELECT * FROM users', (error, results) => {
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+app.delete('/delete/:id', (req, res) => {
+  const gameId = req.params.id;
+
+  if (!gameId) {
+    res.status(400).json({ success: false, error: 'Game ID is required' });
+    return;
+  }
+
+  const query = 'DELETE FROM games WHERE id = ?';
+  connection.query(query, [gameId], (error, results) => {
+    if (error) {
+      res.status(500).json({ success: false, error: error.message });
+      return;
+    }
+    res.json({ success: true, message: 'Game deleted successfully' });
   });
 });
 
